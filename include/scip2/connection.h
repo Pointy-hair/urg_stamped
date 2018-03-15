@@ -173,6 +173,43 @@ public:
   }
 };
 
+class ConnectionString : public Connection
+{
+protected:
+  CallbackReceive cb_debug_receive_;
+
+public:
+  ConnectionString()
+  {
+  }
+  void spin()
+  {
+    throw std::runtime_error("spin() is not allowed on ConnectionString");
+  }
+  void stop()
+  {
+    throw std::runtime_error("stop() is not allowed on ConnectionString");
+  }
+  void send(const std::string &data, CallbackSend cb = CallbackSend())
+  {
+    const auto now = boost::posix_time::microsec_clock::universal_time();
+    if (cb)
+      cb(now);
+    if (cb_debug_receive_)
+      cb_debug_receive_(data, now);
+  }
+  void registerDebugReceiveCallback(CallbackReceive cb)
+  {
+    cb_debug_receive_ = cb;
+  }
+  void debugSend(const std::string &data, const boost::posix_time &send_time)
+  {
+    boost::asio::streambuf buf_;
+
+    receive(buf_, send_time);
+  }
+};
+
 }  // namespace scip2
 
 #endif  // SCIP2_CONNECTION_H
